@@ -1,0 +1,7 @@
+Note that applications should define a main() method instead of extending scala.App. Subclasses of scala.App may not work correctly.
+
+This program just counts the number of lines containing ‘a’ and the number containing ‘b’ in the Spark README. Note that you’ll need to replace YOUR_SPARK_HOME with the location where Spark is installed. Unlike the earlier examples with the Spark shell, which initializes its own SparkSession, we initialize a SparkSession as part of the program.
+
+We call SparkSession.builder to construct a SparkSession, then set the application name, and finally call getOrCreate to get the SparkSession instance.
+
+Our ppliction depends on the Sprk PI, so we’ll lso include n sbt configurtion file, build.sbt, which explins tht Sprk is  dependency. This file lso dds  repository tht Sprk depends on:

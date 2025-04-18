@@ -1,0 +1,8 @@
+# run spark
+docker run -it --mount type=bind,src=./src,dst=/opt/spark/work-dir/src --mount type=bind,src=./target,dst=/opt/spark/work-dir/target apache/spark /bin/bash
+
+# build application, run in bash
+sbt package
+
+# run application 
+/opt/spark/bin/spark-submit --class "App" target/scala-2.12/app_2.12-0.1.jar
