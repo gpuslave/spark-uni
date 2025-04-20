@@ -10,10 +10,10 @@
 # Simple Build Tool
 # http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
 
-*.zip
+# *.zip
 
 dist/*
-# target/
+target/
 lib_managed/
 src_managed/
 project/boot/

@@ -1,0 +1,41 @@
+
+
+services:
+  sbt:
+    container_name: sbt
+    image: sbtscala/scala-sbt:eclipse-temurin-17.0.14_7_1.10.11_2.12.20
+    # restart: unless-stopped
+    cpus: "2.0"
+    mem_limit: 2G
+    volumes:
+      - ./src:/app/src
+      - ./build.sbt:/app/build.sbt
+      - ./target:/app/target
+      - ./project:/app/project
+      - sbt_ivy2:/root/.ivy2
+      - sbt_sbt:/root/.sbt
+      - sbt_coursier:/root/.cache/coursier
+    working_dir: /app
+    # tty: true
+    # stdin_open: true
+    # entrypoint: sleep infinity
+    # command: ["sh", "-c", "tail", "-f", "/dev/null"]
+    
+  spark:
+    container_name: spark
+    image: apache/spark:3.5.5-scala2.12-java17-ubuntu
+    # restart: unless-stopped
+    cpus: "4.0"
+    mem_limit: 4G
+    volumes:
+      - ./target:/app/target
+      - ./src:/app/src
+    entrypoint: /opt/spark/bin/spark-shell
+    tty: true
+    stdin_open: true
+
+
+volumes:
+  sbt_ivy2:
+  sbt_sbt:
+  sbt_coursier:
