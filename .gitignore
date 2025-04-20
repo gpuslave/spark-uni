@@ -12,8 +12,9 @@
 
 # *.zip
 
+
 dist/*
-target/
+target/*
 lib_managed/
 src_managed/
 project/boot/
@@ -128,5 +129,6 @@ spark-warehouse/
 # For SBT
 .jvmopts
 
+!.gitkeep
 
 # End of https://www.toptal.com/developers/gitignore/api/sbt,scala,spark
