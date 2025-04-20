@@ -9,4 +9,4 @@ docker exec -it sbt /bin/bash
 # run application 
 /opt/spark/bin/spark-submit --class "App" target/scala-2.12/app_2.12-1.jar
 
-docker exec -it spark /opt/spark/bin/spark-submit --class "App" /app/target/scala-2.12/app_2.12-1.jar
+docker exec -it spark /opt/spark/bin/spark-submit --class "App" --master local[*] /app/target/scala-2.12/app_2.12-1.jar

@@ -1,0 +1,29 @@
+This is the first line.
+This is a repeated line.
+
+Here is an empty line above.
+This is the fifth line.
+
+This is a repeated line.
+Another non-unique line here.
+This is the ninth line.
+
+Should be a <> here.
+
+Let's add another empty line.
+This is a repeated line.
+Line number thirteen.
+Another non-unique line here.
+
+Sixteenth line is unique.
+This is a repeated line.
+
+Nineteenth line.
+Twentieth line.
+This is a repeated line.
+
+Twenty-third line.
+This is the twenty-fourth line.
+Final line, number twenty-five.
+
+Wrap up all the lines.
