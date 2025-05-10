@@ -383,3 +383,195 @@ object pracTwo {
     sc.stop()
   }
 }
+
+// ----------------------- Практика 3: Ключ-значение и группировки -----------------------
+object pracThree {
+
+  private val conf = new SparkConf()
+    .setAppName("pracThree")
+    .setMaster("local[*]")
+  private val sc = new SparkContext(conf)
+
+  def preConfig(): Unit = {
+    sc.setLogLevel("ERROR")
+    println("\n=== Практика 3: Ключ-значение и группировки ===")
+  }
+
+  def main(args: Array[String]): Unit = {
+    preConfig()
+
+    // Исходный RDD строк (немного расширен для наглядности)
+    val lines =
+      sc.parallelize(List("this is good good", "this is a test line"), 2)
+    // Разбиваем на слова и сразу преобразуем в пары (word, 1)
+    val pairs = lines.flatMap(_.split("\\s+")).map(word => (word, 1))
+    println(s"Initial 'pairs' RDD (word, 1): ${pairs.collect().mkString(", ")}")
+
+    // 1) groupByKey: сгруппировать по ключу и вывести коллекции значений
+    println("\n--- 1) groupByKey ---")
+    val gbkCollected = pairs
+      .groupByKey()
+      .map { case (w, it) => (w, it.toList) }
+      .collect()
+    println(
+      s"1.1) groupByKey on 'pairs' → Array[(String, List[Int])] = ${gbkCollected.mkString(", ")}"
+    )
+
+    val dataForGbk2 =
+      sc.parallelize(List("dog", "tiger", "lion", "cat", "spider", "eagle"), 2)
+    val keyedByLength = dataForGbk2.keyBy(_.length) // RDD[(Int, String)]
+    val gbk2Collected = keyedByLength
+      .groupByKey()
+      .map { case (len, words) => (len, words.toSeq) }
+      .collect()
+    println(
+      s"1.2) groupByKey on 'keyedByLength' (length, Seq[String]) → ${gbk2Collected.mkString(", ")}"
+    )
+
+    // 2) groupBy: группировка произвольных элементов RDD по функциям
+    println("\n--- 2) groupBy ---")
+    val nums = sc.parallelize(1 to 9, 3)
+    val gbParityCollected = nums
+      .groupBy(n => if (n % 2 == 0) "even" else "odd")
+      .map { case (k, vs) => (k, vs.toSeq) }
+      .collect()
+    println(
+      s"2.1) groupBy parity on 'nums' → Array[(String, Seq[Int])] = ${gbParityCollected.mkString(", ")}"
+    )
+
+    // Пример из материала: groupBy по ключу из RDD пар, затем подсчет размера группы
+    val gbKeyCountCollected = pairs // RDD[(String, Int)]
+      .groupBy(t =>
+        t._1
+      ) // Группирует по t._1, результат: RDD[(String, Iterable[(String, Int)])]
+      .map { case (key, iter) =>
+        (key, iter.size)
+      } // Считает количество элементов в каждой группе
+      .collect()
+    println(
+      s"2.2) groupBy key on 'pairs' and count group size → Array[(String, Int)] = ${gbKeyCountCollected
+          .mkString(", ")}"
+    )
+    // Примечание: для подсчета слов reduceByKey обычно эффективнее, чем groupBy + map.
+
+    // 3) reduceByKey: сумма значений по ключу
+    println("\n--- 3) reduceByKey ---")
+    val reducedArray =
+      pairs.reduceByKey(_ + _).collect() // Результат - Array[(String, Int)]
+    println(
+      s"3) reduceByKey (_+_) on 'pairs' → Array[(String, Int)] = ${reducedArray.mkString(", ")}"
+    )
+
+    // 4) aggregateByKey: два примера
+    println("\n--- 4) aggregateByKey ---")
+    // 4.1) простое суммирование (аналогично reduceByKey для данного случая)
+    val agg1Collected = pairs.aggregateByKey(0)(_ + _, _ + _).collect()
+    println(
+      s"4.1) aggregateByKey(0)(_+_,_+_) on 'pairs' (sum) → ${agg1Collected.mkString(", ")}"
+    )
+
+    // 4.2) max на партиции + сумма между партициями
+    val dataForAgg2 =
+      sc.parallelize(List((1, 3), (1, 2), (1, 4), (2, 3), (3, 6), (3, 8)), 3)
+    val agg2Rdd =
+      dataForAgg2.aggregateByKey(0)(math.max(_, _), _ + _) // RDD[(Int, Int)]
+    val agg2Collected = agg2Rdd.collect()
+    println(
+      s"4.2) aggregateByKey(0)(math.max(_,_),_+_) on 'dataForAgg2' (3 partitions) → ${agg2Collected.mkString(", ")}"
+    )
+
+    // 4.3) Пример с 1 партицией из материала
+    val dataForAgg3 =
+      sc.parallelize(List((1, 3), (1, 2), (1, 4), (2, 3), (3, 6), (3, 8)), 1)
+    val agg3Collected =
+      dataForAgg3.aggregateByKey(0)(math.max(_, _), _ + _).collect()
+    println(
+      s"4.3) aggregateByKey(0)(math.max(_,_),_+_) on 'dataForAgg3' (1 partition) → ${agg3Collected.mkString(", ")}"
+    )
+
+    // 5) sortByKey: сортировка RDD[K,V] по ключу K (K должен быть Ordered)
+    println("\n--- 5) sortByKey (RDD operation) ---")
+    val wordCountsRdd = pairs.reduceByKey(_ + _) // RDD[(String, Int)]
+
+    val sortedByKeyAscCollected =
+      wordCountsRdd.sortByKey(ascending = true).collect()
+    println(
+      s"5.1) sortByKey true (on wordCountsRdd by String key) → ${sortedByKeyAscCollected.mkString(", ")}"
+    )
+
+    val sortedByKeyDescCollected =
+      wordCountsRdd.sortByKey(ascending = false).collect()
+    println(
+      s"5.2) sortByKey false (on wordCountsRdd by String key) → ${sortedByKeyDescCollected.mkString(", ")}"
+    )
+
+    // Используем agg2Rdd (RDD[(Int, Int)]) из шага 4.2
+    val sortedAgg2RddByKeyAscCollected =
+      agg2Rdd.sortByKey(ascending = true).collect()
+    println(
+      s"5.3) sortByKey true (on agg2Rdd by Int key) → ${sortedAgg2RddByKeyAscCollected.mkString(", ")}"
+    )
+
+    // 6) sortBy: сортировка RDD[T] по функции f: T => K (K должен быть Ordered)
+    println("\n--- 6) sortBy (RDD operation) ---")
+    // wordCountsRdd это RDD[(String, Int)]
+    // 6.1) Сортировка по значению (количеству) по убыванию
+    val sortedByValueDescRddCollected = wordCountsRdd
+      .sortBy(
+        pair => pair._2,
+        ascending = false
+      ) // Сортировка по второму элементу пары (значению)
+      .collect()
+    println(
+      s"6.1) RDD sortBy value (desc) on wordCountsRdd → ${sortedByValueDescRddCollected.mkString(", ")}"
+    )
+
+    // 6.2) Сортировка по ключу (слову) по убыванию (эквивалентно sortByKey(false) для RDD[K,V])
+    val sortedByKeyDescUsingSortByRddCollected = wordCountsRdd
+      .sortBy(
+        pair => pair._1,
+        ascending = false
+      ) // Сортировка по первому элементу пары (ключу)
+      .collect()
+    println(
+      s"6.2) RDD sortBy key (desc) on wordCountsRdd → ${sortedByKeyDescUsingSortByRddCollected.mkString(", ")}"
+    )
+
+    // 6.3) Пример из материала: sortBy(t => t, false) - сортировка по кортежу целиком
+    // Для RDD[(String, Int)], сортирует сначала по String, затем по Int (стандартное сравнение кортежей)
+    val sortedByTupleDescRddCollected = wordCountsRdd
+      .sortBy(
+        tuple => tuple,
+        ascending = false
+      ) // Сортировка по кортежу (ключ, значение)
+      .collect()
+    println(
+      s"6.3) RDD sortBy tuple (desc) on wordCountsRdd → ${sortedByTupleDescRddCollected.mkString(", ")}"
+    )
+
+    // --- Для сравнения: сортировка коллекций Scala (на массивах, не RDD) ---
+    println(
+      "\n--- Scala Collection Sort (on Arrays, not RDDs for clarification) ---"
+    )
+    // 'reducedArray' это Array[(String, Int)] из шага 3
+    val reducedArraySortedByValueScala =
+      reducedArray.sortBy(_._2)(Ordering[Int].reverse)
+    println(
+      s"Scala: 'reducedArray' sorted by value (desc) → ${reducedArraySortedByValueScala.mkString(", ")}"
+    )
+
+    // 'agg2Collected' это Array[(Int, Int)] из шага 4.2
+    val agg2CollectedSortedByKeyScala =
+      agg2Collected.sortBy(_._1) // по возрастанию ключа
+    println(
+      s"Scala: 'agg2Collected' sorted by key (asc) → ${agg2CollectedSortedByKeyScala.mkString(", ")}"
+    )
+    val agg2CollectedSortedByKeyDescScala =
+      agg2Collected.sortBy(_._1)(Ordering[Int].reverse) // по убыванию ключа
+    println(
+      s"Scala: 'agg2Collected' sorted by key (desc) → ${agg2CollectedSortedByKeyDescScala.mkString(", ")}"
+    )
+
+    sc.stop()
+  }
+}
