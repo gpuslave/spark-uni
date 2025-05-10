@@ -44,7 +44,7 @@ object taskOne {
 
     linesWithWTF
       .collect()
-      .foreach(pair => (pair._1.foreach(print), println("\n" + pair._2)))
+      .foreach(pair => (pair._1.foreach(print), println("\t" + pair._2)))
 
     println()
     // 2. Посчитать количество вхождений
@@ -52,7 +52,7 @@ object taskOne {
       .count() // return RDD size
 
     println(
-      "The amount of word \"" + wordToFind + "\" in this file is " + countWTF
+      "The amount of \"" + wordToFind + "\" word in this file is - " + countWTF
     )
 
     // 3. Разбить текст на слова и удалить пустые строки
@@ -72,32 +72,33 @@ object taskOne {
       .parallelize(intArray, 4)
       .map(elem => elem * elem)
       .reduce(_ + _)
-    
+
     println(s"Sum of squares 1...5: $sumOfSquares")
 
     val aArray = Array(("a", 1), ("b", 9), ("a", 3), ("a", 3))
     val aRDD = sc.parallelize(aArray)
     val rbk = aRDD
       .reduceByKey(_ + _)
-    rbk.collect().foreach{ case (k,v) => println(s"$k -> $v") }
+    rbk.collect().foreach { case (k, v) => println(s"$k -> $v") }
 
     println()
 
     val mk = aRDD
-      .map{ case (key, value) => (key, value - 300)}
-    mk.collect().foreach{ case (k,v) => println(s"$k -> $v") }
-    
+      .map { case (key, value) => (key, value - 300) }
+    mk.collect().foreach { case (k, v) => println(s"$k -> $v") }
+
     sc.stop()
   }
 }
-
 
 // ----------------------- Практика 1 -----------------------
 object pracOne {
 
   private val conf = new SparkConf()
     .setAppName("pracOne") // Изменено имя приложения для соответствия объекту
-    .setMaster("local[*]") // Используем local[*] для использования всех доступных ядер
+    .setMaster(
+      "local[*]"
+    ) // Используем local[*] для использования всех доступных ядер
 
   private val sc = new SparkContext(conf)
 
@@ -130,7 +131,9 @@ object pracOne {
     val kvRdd = wordRdd.map((_, 1)) // [slide: 2]
     val wordCountRdd = kvRdd.reduceByKey(_ + _) // [slide: 2]
     println("Подсчет слов (первые 10):")
-    wordCountRdd.take(10).foreach(println) // [slide: 2] (collect может быть большим)
+    wordCountRdd
+      .take(10)
+      .foreach(println) // [slide: 2] (collect может быть большим)
 
     val outputPath = "/opt/spark/work-dir/pracOneOutput" // [slide: 2]
     println(s"Сохранение результата в: $outputPath")
@@ -140,24 +143,31 @@ object pracOne {
 
     // === Раздел 3: Работа с RDD (map, sortBy, filter, collect) ===
     println("\n=== Раздел 3: Работа с RDD (map, sortBy, filter) ===")
-    val rdd_p3_1 = sc.parallelize(List(5, 6, 4, 7, 3, 8, 2, 9, 1, 10)) // [slide: 3]
+    val rdd_p3_1 =
+      sc.parallelize(List(5, 6, 4, 7, 3, 8, 2, 9, 1, 10)) // [slide: 3]
     println(s"Исходный RDD: ${rdd_p3_1.collect().mkString(", ")}")
     // Умножаем каждый элемент на 2 и сортируем
-    val rdd_p3_2 = rdd_p3_1.map(_ * 2).sortBy(x => x, ascending = true) // [slide: 3]
+    val rdd_p3_2 =
+      rdd_p3_1.map(_ * 2).sortBy(x => x, ascending = true) // [slide: 3]
     println(s"RDD после map(*2) и sortBy: ${rdd_p3_2.collect().mkString(", ")}")
     // Фильтруем элементы >= 10
     val rdd_p3_3 = rdd_p3_2.filter(_ >= 10) // [slide: 3]
-    println(s"RDD после filter(>=10): ${rdd_p3_3.collect().mkString(", ")}") // [slide: 3]
+    println(
+      s"RDD после filter(>=10): ${rdd_p3_3.collect().mkString(", ")}"
+    ) // [slide: 3]
 
     println()
 
     // === Раздел 4: Работа с RDD (flatMap) ===
     println("\n=== Раздел 4: Работа с RDD (flatMap) ===")
-    val rdd_p4_1 = sc.parallelize(Array("a b c", "d e f", "h i j")) // [slide: 4]
+    val rdd_p4_1 =
+      sc.parallelize(Array("a b c", "d e f", "h i j")) // [slide: 4]
     println(s"Исходный RDD (строки): ${rdd_p4_1.collect().mkString(" | ")}")
     // Разбиваем строки на слова
     val rdd_p4_2 = rdd_p4_1.flatMap(_.split(' ')) // [slide: 4]
-    println(s"RDD после flatMap: ${rdd_p4_2.collect().mkString(", ")}") // [slide: 4]
+    println(
+      s"RDD после flatMap: ${rdd_p4_2.collect().mkString(", ")}"
+    ) // [slide: 4]
 
     println()
 
@@ -172,43 +182,62 @@ object pracOne {
     println(s"Объединение (union): ${rdd_p5_3_union.collect().mkString(", ")}")
     // Уникальные элементы объединения
     val rdd_p5_distinct = rdd_p5_3_union.distinct() // [slide: 5]
-    println(s"Уникальные элементы объединения (distinct): ${rdd_p5_distinct.collect().mkString(", ")}")
+    println(
+      s"Уникальные элементы объединения (distinct): ${rdd_p5_distinct.collect().mkString(", ")}"
+    )
     // Пересечение
     val rdd_p5_4_intersection = rdd_p5_1.intersection(rdd_p5_2) // [slide: 5]
-    println(s"Пересечение (intersection): ${rdd_p5_4_intersection.collect().mkString(", ")}") // [slide: 5]
+    println(
+      s"Пересечение (intersection): ${rdd_p5_4_intersection.collect().mkString(", ")}"
+    ) // [slide: 5]
 
     println()
 
     // === Раздел 6: Работа с RDD (join, union, groupByKey) ===
     println("\n=== Раздел 6: Работа с RDD (join, union, groupByKey) ===")
-    val rdd_p6_1 = sc.parallelize(List(("tom", 1), ("jerry", 3), ("kitty", 2))) // [slide: 6]
-    val rdd_p6_2 = sc.parallelize(List(("jerry", 2), ("tom", 1), ("shuke", 2))) // [slide: 6]
-     println(s"RDD 1 (пары): ${rdd_p6_1.collect().mkString(", ")}")
-     println(s"RDD 2 (пары): ${rdd_p6_2.collect().mkString(", ")}")
+    val rdd_p6_1 =
+      sc.parallelize(List(("tom", 1), ("jerry", 3), ("kitty", 2))) // [slide: 6]
+    val rdd_p6_2 =
+      sc.parallelize(List(("jerry", 2), ("tom", 1), ("shuke", 2))) // [slide: 6]
+    println(s"RDD 1 (пары): ${rdd_p6_1.collect().mkString(", ")}")
+    println(s"RDD 2 (пары): ${rdd_p6_2.collect().mkString(", ")}")
     // Соединение (Join)
     val rdd_p6_3_join = rdd_p6_1.join(rdd_p6_2) // [slide: 6]
-    println(s"Соединение (join): ${rdd_p6_3_join.collect().mkString(", ")}") // [slide: 6]
+    println(
+      s"Соединение (join): ${rdd_p6_3_join.collect().mkString(", ")}"
+    ) // [slide: 6]
     // Объединение (Union) для пар
     val rdd_p6_4_union = rdd_p6_1.union(rdd_p6_2) // [slide: 6]
-    println(s"Объединение пар (union): ${rdd_p6_4_union.collect().mkString(", ")}")
+    println(
+      s"Объединение пар (union): ${rdd_p6_4_union.collect().mkString(", ")}"
+    )
     // Группировка по ключу
     val rdd_p6_grouped = rdd_p6_4_union.groupByKey() // [slide: 6]
     // Преобразуем результат groupByKey для читаемого вывода
-    val groupedResult = rdd_p6_grouped.map { case (key, values) => (key, values.toList) }.collect()
-    println(s"Группировка по ключу (groupByKey): ${groupedResult.mkString(", ")}") // [slide: 6] (collect вызывался на RDD до map)
+    val groupedResult = rdd_p6_grouped
+      .map { case (key, values) => (key, values.toList) }
+      .collect()
+    println(
+      s"Группировка по ключу (groupByKey): ${groupedResult.mkString(", ")}"
+    ) // [slide: 6] (collect вызывался на RDD до map)
 
     println()
 
     // === Раздел 7: Работа с RDD (cogroup) ===
     println("\n=== Раздел 7: Работа с RDD (cogroup) ===")
-    val rdd_p7_1 = sc.parallelize(List(("tom", 1), ("tom", 2), ("jerry", 3), ("kitty", 2))) // [slide: 7]
-    val rdd_p7_2 = sc.parallelize(List(("jerry", 2), ("tom", 1), ("shuke", 2))) // [slide: 7]
+    val rdd_p7_1 = sc.parallelize(
+      List(("tom", 1), ("tom", 2), ("jerry", 3), ("kitty", 2))
+    ) // [slide: 7]
+    val rdd_p7_2 =
+      sc.parallelize(List(("jerry", 2), ("tom", 1), ("shuke", 2))) // [slide: 7]
     println(s"RDD 1 (пары): ${rdd_p7_1.collect().mkString(", ")}")
     println(s"RDD 2 (пары): ${rdd_p7_2.collect().mkString(", ")}")
     // Cogroup
     val rdd_p7_3_cogroup = rdd_p7_1.cogroup(rdd_p7_2) // [slide: 7]
     // Преобразуем результат cogroup для читаемого вывода
-    val cogroupResult = rdd_p7_3_cogroup.map { case (key, (iter1, iter2)) => (key, (iter1.toList, iter2.toList)) }.collect()
+    val cogroupResult = rdd_p7_3_cogroup
+      .map { case (key, (iter1, iter2)) => (key, (iter1.toList, iter2.toList)) }
+      .collect()
     println(s"Результат cogroup: ${cogroupResult.mkString(", ")}") // [slide: 7]
 
     println()
@@ -217,7 +246,7 @@ object pracOne {
     println("\n=== Раздел 8: Работа с RDD (reduce) ===")
     val rdd_p8_1 = sc.parallelize(List(1, 2, 3, 4, 5)) // [slide: 8]
     println(s"Исходный RDD: ${rdd_p8_1.collect().mkString(", ")}")
-    // Свертка (Reduce)
+    // (Reduce)
     val rdd_p8_2_reduce_result = rdd_p8_1.reduce(_ + _) // [slide: 8]
     println(s"Результат reduce (+): $rdd_p8_2_reduce_result") // [slide: 8]
 
@@ -225,25 +254,35 @@ object pracOne {
 
     // === Раздел 9: Работа с RDD (union, reduceByKey, sortByKey) ===
     println("\n=== Раздел 9: Работа с RDD (union, reduceByKey, sortByKey) ===")
-    val rdd_p9_1 = sc.parallelize(List(("tom", 1), ("jerry", 3), ("kitty", 2), ("shuke", 1))) // [slide: 9]
-    val rdd_p9_2 = sc.parallelize(List(("jerry", 2), ("tom", 3), ("shuke", 2), ("kitty", 5))) // [slide: 9]
+    val rdd_p9_1 = sc.parallelize(
+      List(("tom", 1), ("jerry", 3), ("kitty", 2), ("shuke", 1))
+    ) // [slide: 9]
+    val rdd_p9_2 = sc.parallelize(
+      List(("jerry", 2), ("tom", 3), ("shuke", 2), ("kitty", 5))
+    ) // [slide: 9]
     println(s"RDD 1 (пары): ${rdd_p9_1.collect().mkString(", ")}")
     println(s"RDD 2 (пары): ${rdd_p9_2.collect().mkString(", ")}")
     // Объединение
     val rdd_p9_3_union = rdd_p9_1.union(rdd_p9_2) // [slide: 9]
-    println(s"Объединение пар (union): ${rdd_p9_3_union.collect().mkString(", ")}")
+    println(
+      s"Объединение пар (union): ${rdd_p9_3_union.collect().mkString(", ")}"
+    )
     // Агрегация по ключу
     val rdd_p9_4_reduced = rdd_p9_3_union.reduceByKey(_ + _) // [slide: 9]
-    println(s"Агрегация по ключу (reduceByKey +): ${rdd_p9_4_reduced.collect().mkString(", ")}") // [slide: 9]
+    println(
+      s"Агрегация по ключу (reduceByKey +): ${rdd_p9_4_reduced.collect().mkString(", ")}"
+    ) // [slide: 9]
     // Сортировка по значению (в порядке убывания)
     // Шаг 1: Меняем местами ключ и значение (значение становится ключом)
     // Шаг 2: Сортируем по новому ключу (бывшему значению) в убывающем порядке
     // Шаг 3: Меняем ключ и значение обратно
-    val rdd_p9_5_sorted = rdd_p9_4_reduced.map(t => (t._2, t._1)) // значение -> ключ
-                                       .sortByKey(ascending = false) // сортируем по значению (убыв.)
-                                       .map(t => (t._2, t._1)) // ключ -> значение (обратно)  [slide: 9]
-    println(s"Сортировка по убыванию значения: ${rdd_p9_5_sorted.collect().mkString(", ")}") // [slide: 9]
-
+    val rdd_p9_5_sorted = rdd_p9_4_reduced
+      .map(t => (t._2, t._1)) // значение -> ключ
+      .sortByKey(ascending = false) // сортируем по значению (убыв.)
+      .map(t => (t._2, t._1)) // ключ -> значение (обратно)  [slide: 9]
+    println(
+      s"Сортировка по убыванию значения: ${rdd_p9_5_sorted.collect().mkString(", ")}"
+    ) // [slide: 9]
 
     println("\n--- Практика завершена ---")
 
@@ -252,3 +291,39 @@ object pracOne {
   }
 }
 // TODO: углубиться что такое join, groupByKey, cogroup на парах (_,_)
+
+// ----------------------- Практика 2 -----------------------
+object pracTwo {
+
+  private val conf = new SparkConf()
+    .setAppName("pracTwo") // Имя приложения
+    .setMaster(
+      "local[*]"
+    ) // Запуск в локальном режиме со всеми доступными ядрами
+
+  private val sc = new SparkContext(conf)
+
+  def preConfig(): Unit = {
+    sc.setLogLevel(
+      "ERROR"
+    ) // Устанавливаем уровень логирования, чтобы избежать лишнего вывода
+    println("\n")
+  }
+
+  def main(args: Array[String]): Unit = {
+    preConfig()
+
+    val csvFilePath = "/app/src/data.csv"
+
+    println("--- Практика 2: RDD Transformations ---")
+    val rdd = sc
+      .textFile(csvFilePath)
+      .filter(_.nonEmpty)
+      .cache()
+
+    rdd.collect().foreach(println)
+    val rdd1 = rdd
+      .flatMap(_.split(","))
+    rdd1.foreach(print)
+  }
+}
