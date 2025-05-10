@@ -322,8 +322,64 @@ object pracTwo {
       .cache()
 
     rdd.collect().foreach(println)
-    val rdd1 = rdd
-      .flatMap(_.split(","))
-    rdd1.foreach(print)
+// === Шаг 2: Преобразование RDD (flatMap) ===
+    // Разделяем каждую строку на отдельные слова/элементы по запятой.
+    // flatMap преобразует каждую строку в коллекцию слов, а затем "сглаживаем" все эти коллекции в один RDD.
+    println("\n=== Шаг 2: RDD после flatMap (_ split \",\") ===")
+    val rdd1 = rdd.flatMap { line => line.split(",") }
+    // Альтернативный синтаксис: val rdd1 = rdd.flatMap(x => x.split(","))
+    println(
+      s"Данные после flatMap (отдельные элементы): ${rdd1.collect().mkString(", ")}"
+    )
+    // Ожидаемый формат: Array[String] = Array(Johnson, Rachel, Novato, USA, Smith, John, Chicago, USA, ...)
+
+    // === Шаг 3: Преобразование RDD (map) ===
+    // Преобразуем каждый элемент в пару (элемент, 1).
+    // Это типичный шаг для подсчета частоты слов/элементов.
+    println("\n=== Шаг 3: RDD после map ((_, 1)) ===")
+    val rdd2 = rdd1.map { word => (word, 1) }
+    // Альтернативный синтаксис: val rdd2 = rdd1.map(x => (x, 1))
+    println(
+      s"Данные после map (пары ключ-значение): ${rdd2.collect().mkString(", ")}"
+    )
+    // Ожидаемый формат: Array[(String, Int)] = Array((Johnson,1), (Rachel,1), (Novato,1), (USA,1), (Smith,1), ...)
+
+    // === Шаг 4: Агрегация по ключу (reduceByKey) ===
+    // Суммируем значения для одинаковых ключей.
+    // Например, если есть ("USA", 1) и ("USA", 1), результат будет ("USA", 2).
+    println("\n=== Шаг 4: RDD после reduceByKey (_ + _) ===")
+    val rdd3 = rdd2.reduceByKey { (count1, count2) => count1 + count2 }
+    // Альтернативный синтаксис: val rdd3 = rdd2.reduceByKey((x, y) => x + y)
+    println(
+      s"Данные после reduceByKey (подсчет уникальных элементов): ${rdd3.collect().mkString(", ")}"
+    )
+    // Ожидаемый результат: Array[(String, Int)] = Array((Vela,1), (Blaise,2), (Ginny,1), (USA,2), ...)
+
+    // === Шаг 5: Сортировка результатов по значению (частоте) в убывающем порядке ===
+    // Шаг 5.1: Меняем местами ключ и значение, чтобы значение (частота) стало ключом.
+    // Шаг 5.2: Сортируем по новому ключу (бывшему значению) в убывающем порядке (ascending = false).
+    // Шаг 5.3: Меняем ключ и значение обратно в исходный формат.
+    println("\n=== Шаг 5: RDD после сортировки по значению (частоте) ===")
+    val rdd4 = rdd3
+      .map { case (word, count) =>
+        (count, word)
+      } // Меняем (слово, частота) на (частота, слово)
+      .sortByKey(ascending =
+        false
+      ) // Сортируем по частоте (первый элемент пары) в убывающем порядке
+      .map { case (count, word) =>
+        (word, count)
+      } // Меняем обратно на (слово, частота)
+    // Альтернативный синтаксис:
+    // val rdd4 = rdd3.map(x => x.swap).sortByKey(ascending = false).map(x => x.swap)
+    println(
+      s"Данные после сортировки по убыванию частоты: ${rdd4.collect().mkString(", ")}"
+    )
+    // Ожидаемый результат (пример, зависит от данных): Array[(String, Int)] = Array((USA,2), (Blaise,2), (Vela,1), (Ginny,1), ...)
+
+    println("\n--- Практика 2 завершена ---")
+
+    // Останавливаем SparkContext
+    sc.stop()
   }
 }
