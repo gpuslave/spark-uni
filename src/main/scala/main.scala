@@ -2,6 +2,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
+import scala.math
 
 // ----------------------- Лаба 1 -----------------------
 object taskOne {
@@ -573,5 +575,52 @@ object pracThree {
     )
 
     sc.stop()
+  }
+}
+
+object pracFour {
+  private val conf = new SparkConf()
+    .setAppName("pracFour")
+    .setMaster(
+      "local[*]"
+    )
+
+  private val sc = new SparkContext(conf)
+
+  def preConfig(): Unit = {
+    sc.setLogLevel(
+      "ERROR"
+    )
+    println("\n")
+  }
+
+  def main(args: Array[String]): Unit = {
+    preConfig()
+    println(
+      "-------------------- Практика 4: RDD подсчет слов -------------------- "
+    )
+
+    val filePath = "/app/src/temperatures.txt"
+    val rdd = sc
+      .textFile(filePath)
+      .filter(_.nonEmpty)
+      .persist(StorageLevel.MEMORY_AND_DISK)
+
+    val rdd1 = rdd
+      .map(str => {
+        val arr = str.split(",")
+        val year = arr(0).toInt
+        val temp = arr(1).toInt
+        (year, (temp, temp))
+      })
+
+    rdd1.collect().foreach(print)
+
+    val rdd2 = rdd1
+      .reduceByKey { case ((max1, min1), (max2, min2)) =>
+        (math.max(max1, max2), math.min(min1, min2))
+      }
+
+    rdd2.collect().foreach(println)
   }
 }
