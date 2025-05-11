@@ -624,3 +624,71 @@ object pracFour {
     rdd2.collect().foreach(println)
   }
 }
+
+object pracFive {
+  private val spark = SparkSession
+    .builder()
+    .master("local")
+    .appName("pracFive")
+    .getOrCreate()
+
+  private val sc = spark.sparkContext
+
+  def preConfig(): Unit = {
+    sc.setLogLevel(
+      "ERROR"
+    )
+    println("\n")
+  }
+
+  case class Student(
+      grade: Int,
+      name: String,
+      age: Int,
+      gender: String,
+      subject: String,
+      mark: Int
+  )
+
+  def main(args: Array[String]): Unit = {
+    import spark.implicits._
+    preConfig()
+
+    val filePath = "/app/src/people.txt"
+
+    println("1. RDD -> DataFrame")
+
+    val rdd = sc
+      .textFile(filePath)
+      .filter(_.nonEmpty)
+
+    val header = rdd.first()
+
+    rdd.collect().foreach(println)
+
+    val students = rdd
+      .filter(_ != header)
+      .map(line => {
+        val tokens = line.trim.split("\\s+")
+        val grade = tokens(0).toInt
+        val name = tokens(1)
+        val age = tokens(2).toInt
+        val gender = tokens.slice(3, 5).mkString(" ")
+        val subject = tokens(5).replaceAll("[,\\.]", "")
+        val mark = tokens(6).replaceAll("[^0-9]", "").toInt
+        Student(grade, name, age, gender, subject, mark)
+      })
+
+    val df = students.toDF()
+    df.printSchema()
+    df.show()
+
+    println("2. DataFrame -> RDD ")
+
+    val df1 = spark.read.json("/app/src/people.json")
+    val rdd1 = df1.rdd
+    rdd1.collect().foreach(println)
+
+    spark.stop()
+  }
+}

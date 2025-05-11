@@ -1,0 +1,28 @@
+Класс Имя Возраст Пол Предмет Оценка
+12 Ivanov 25 old man сhinese 50
+12 Ivanov 25 old man mathematics 60
+12 Ivanov 25 old man еnglish 70
+12 Petrov 20 old man сhinese 50
+12 Petrov 20 old man mathematics 50
+12 Petrov 20 old man еnglish 50
+12 Sidorova 19 old woman сhinese 70
+12 Sidorova 19 old woman mathematics 70
+12 Sidorova 19 old woman еnglish 70
+12 Lunin 25 old man сhinese 50
+12 Lunin 25 old man mathematics, 60.
+12 Lunin 25 old man еnglish 70
+13 Yakovlev 25 old man сhinese 60 лет
+13 Yakovlev 25 old man mathematics, 60 .
+13 Yakovlev 25 old man еnglish 70
+13 Volkov 20 old man сhinese 50
+13 Volkov 20 old man mathematics 60
+13 Volkov 20 old man еnglish 50
+13 Zaitseva 19 old woman сhinese 70
+13 Zaitseva 19 old woman mathematics 80
+13 Zaitseva 19 old woman еnglish 70
+13 Lisitsin 20 old man сhinese 30
+13 Lisitsin 20 old man мужской mathematics 60
+13 Lisitsin 20 old man еnglish 50
+13 Sorokina 18 old woman сhinese 70
+13 Sorokina 18 old woman mathematics 80
+13 Sorokina 18 old woman еnglish 70
