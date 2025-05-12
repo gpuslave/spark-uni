@@ -713,3 +713,75 @@ object pracFive {
     spark.stop()
   }
 }
+
+
+object taskTwo {
+  private val spark = SparkSession
+    .builder()
+    .master("local")
+    .appName("taskOne")
+    .getOrCreate()
+
+  private val sc = spark.sparkContext
+
+  def preConfig(): Unit = {
+    sc.setLogLevel(
+      "ERROR"
+    )
+    println("\n")
+  }
+
+  case class Student(
+      grade: Int,
+      name: String,
+      age: Int,
+      gender: String,
+      subject: String,
+      mark: Int
+  )
+
+  def main(args: Array[String]): Unit = {
+    import spark.implicits._
+    preConfig()
+
+    val filePath = "/app/src/people.txt"
+
+    val rdd = sc
+      .textFile(filePath)
+      .filter(_.nonEmpty)
+    
+    val header = rdd.first()
+
+    val df = rdd
+      .filter(_ != header)
+      .map(line => {
+        val tokens = line.trim.split("\\s+")
+        val grade = tokens(0).toInt
+        val name = tokens(1)
+        val age = tokens(2).toInt
+        val gender = tokens.slice(3, 5).mkString(" ")
+        val subject = tokens(5).replaceAll("[,\\.]", "")
+        val markStr = tokens(6).replaceAll("[^0-9]", "")
+        val mark = if (markStr.nonEmpty) markStr.toInt else 0
+        Student(grade, name, age, gender, subject, mark)
+      })
+      .toDF()
+    
+    df.printSchema()
+    df.show()
+
+    println("-------------------")
+    val passed = df.filter($"mark" >= 60)
+    val totalPassed = passed.count()
+    val under20Passed = passed.filter($"age" < 20).count()
+    val eq20Passed    = passed.filter($"age" === 20).count()
+    val over20Passed  = passed.filter($"age" > 20).count()
+
+    println(s"1) Всего сдали тест: $totalPassed")
+    println(s"1.1) Моложе 20 лет сдали: $under20Passed")
+    println(s"1.2) Ровно 20 лет сдали: $eq20Passed")
+    println(s"1.3) Старше 20 лет сдали: $over20Passed")
+
+    spark.stop()
+  }
+}
