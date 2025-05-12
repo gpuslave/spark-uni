@@ -21,7 +21,7 @@
 13 Zaitseva 19 old woman mathematics 80
 13 Zaitseva 19 old woman еnglish 70
 13 Lisitsin 20 old man сhinese 30
-13 Lisitsin 20 old man мужской mathematics 60
+13 Lisitsin 20 old man mathematics 60
 13 Lisitsin 20 old man еnglish 50
 13 Sorokina 18 old woman сhinese 70
 13 Sorokina 18 old woman mathematics 80

@@ -675,7 +675,8 @@ object pracFive {
         val age = tokens(2).toInt
         val gender = tokens.slice(3, 5).mkString(" ")
         val subject = tokens(5).replaceAll("[,\\.]", "")
-        val mark = tokens(6).replaceAll("[^0-9]", "").toInt
+        val markStr = tokens(6).replaceAll("[^0-9]", "")
+        val mark = if (markStr.nonEmpty) markStr.toInt else 0
         Student(grade, name, age, gender, subject, mark)
       })
 
@@ -688,6 +689,26 @@ object pracFive {
     val df1 = spark.read.json("/app/src/people.json")
     val rdd1 = df1.rdd
     rdd1.collect().foreach(println)
+
+    println("3. RDD -> Dataset")
+
+    val studentDS = students
+      .toDS()
+
+    studentDS.printSchema()
+    studentDS.show()
+
+    println("4. Dataset -> RDD")
+    val studentRDD = studentDS.rdd
+    studentRDD.collect().foreach(println)
+
+    println("5. DataFrame -> Dataset")
+    val ds2 = df.as[Student]
+    ds2.show()
+
+    println("6. Dataset -> DataFrame")
+    val df3 = ds2.toDF()
+    df3.show()
 
     spark.stop()
   }
