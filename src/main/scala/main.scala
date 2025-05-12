@@ -3,6 +3,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.sql.functions._
 import scala.math
 
 // ----------------------- Лаба 1 -----------------------
@@ -652,6 +653,7 @@ object pracFive {
 
   def main(args: Array[String]): Unit = {
     import spark.implicits._
+    import org.apache.spark.sql.types._
     preConfig()
 
     val filePath = "/app/src/people.txt"
@@ -684,6 +686,8 @@ object pracFive {
     df.printSchema()
     df.show()
 
+    // Доделать: csv -> dataframe с разными scheme
+
     println("2. DataFrame -> RDD ")
 
     val df1 = spark.read.json("/app/src/people.json")
@@ -691,6 +695,29 @@ object pracFive {
     rdd1.collect().foreach(println)
 
     println("3. RDD -> Dataset")
+
+    val dfcsv1 = spark
+      .read
+      .option("header", "false")
+      .option("inferSchema", "true")
+      .csv("/app/src/data.csv")
+    dfcsv1.printSchema()
+    dfcsv1.show()
+
+    val customSchema = StructType(Seq(
+      StructField("value1", StringType, true),
+      StructField("value2", StringType, true),
+      StructField("value3", StringType, true),
+      StructField("value4", StringType, true)
+    ))
+
+    val dfcsv2 = spark
+      .read
+      .option("header", false)
+      .schema(customSchema)
+      .csv("/app/src/data.csv")
+    dfcsv2.printSchema()
+    dfcsv2.show()
 
     val studentDS = students
       .toDS()
@@ -742,6 +769,7 @@ object taskTwo {
 
   def main(args: Array[String]): Unit = {
     import spark.implicits._
+    import org.apache.spark.sql.types._
     preConfig()
 
     val filePath = "/app/src/people.txt"
@@ -782,6 +810,143 @@ object taskTwo {
     println(s"1.2) Ровно 20 лет сдали: $eq20Passed")
     println(s"1.3) Старше 20 лет сдали: $over20Passed")
 
+    println("-------------------")
+    val man = df.filter($"gender" === "old man")
+    val woman = df.filter($"gender" === "old woman")
+    val manCount = man.count()
+    val womanCount = woman.count()
+
+    println(s"2) Всего мужчин сдавало тест: $manCount")
+    println(s"2.1) Всего мужчин сдавало тест: $womanCount")
+
+    println("-------------------")
+    val count12 = df.filter($"grade" === 12).select($"name").distinct().count()
+    val count13 = df.filter($"grade" === 13).select($"name").distinct().count()
+
+    println(s"3) Учащихся в 12 классе: $count12")
+    println(s"3.1) Учащихся в 13 классе: $count13")
+
+    println("-------------------")
+    // 4) Средний балл по языковым предметам (Chinese, English)
+    val avgLang = df
+      .filter($"subject".isin("chinese", "english"))
+      .agg(avg($"mark"))
+      .as[Double]
+      .first()
+    println(s"4) Средний по языкам: $avgLang")
+
+    // 4.1) Средний балл по математике
+    val avgMathSubj = df
+      .filter($"subject" === "mathematics")
+      .agg(avg($"mark"))
+      .as[Double]
+      .first()
+    println(s"4.1) Средний по математике: $avgMathSubj")
+
+    // 4.2) Средний балл по английскому
+    val avgEnglish = df
+      .filter($"subject" === "english")
+      .agg(avg($"mark"))
+      .as[Double]
+      .first()
+    println(s"4.2) Средний по английскому: $avgEnglish")
+
+    println("-------------------")
+    // 5) Средний общий балл на одного ученика
+    val avgTotalPerStudent = df
+      .groupBy($"name")
+      .agg(sum($"mark").as("total"))
+      .agg(avg($"total"))
+      .as[Double]
+      .first()
+    println(s"5) Средний общий балл на ученика: $avgTotalPerStudent")
+
+    println("-------------------")
+    // 6) Средний общий балл 12 класса и по полу
+    val totals = df
+      .groupBy($"name", $"grade", $"gender")
+      .agg(sum($"mark").as("total"))
+    val avgTotal12 = totals.filter($"grade" === 12).agg(avg($"total")).as[Double].first()
+    val avgTotal12Men = totals
+      .filter($"grade" === 12 && $"gender".contains("man"))
+      .agg(avg($"total"))
+      .as[Double]
+      .first()
+    val avgTotal12Women = totals
+      .filter($"grade" === 12 && $"gender".contains("woman"))
+      .agg(avg($"total"))
+      .as[Double]
+      .first()
+    println(s"6) Средний общий балл 12 класса: $avgTotal12")
+    println(s"6.1) 12 класс (мужчины): $avgTotal12Men")
+    println(s"6.2) 12 класс (женщины): $avgTotal12Women")
+
+       // 6.3) Аналогично для 13 класса
+    val avgTotal13Men = totals
+      .filter($"grade" === 13 && $"gender".contains("man"))
+      .agg(avg($"total"))
+      .as[Double]
+      .first()
+    val avgTotal13Women = totals
+      .filter($"grade" === 13 && $"gender".contains("woman"))
+      .agg(avg($"total"))
+      .as[Double]
+      .first()
+    println(s"6.3) 13 класс (мужчины): $avgTotal13Men, (женщины): $avgTotal13Women")
+
+    println("---------")
+    // 7) Самая высокая оценка по китайскому во всей школе
+    val maxChinese = df
+      .filter($"subject" === "chinese")
+      .agg(max($"mark"))
+      .as[Int]
+      .first()
+    println(s"7) Макс по китайскому: $maxChinese")
+
+    // 7.1) Минимальный балл по китайскому в 12 классе
+    val minChinese12 = df
+      .filter($"grade" === 12 && $"subject" === "chinese")
+      .agg(min($"mark"))
+      .as[Int]
+      .first()
+    println(s"7.1) Мин по китайскому в 12: $minChinese12")
+
+    // 7.2) Самый высокий балл по математике в 13 классе
+    val maxMath13 = df
+      .filter($"grade" === 13 && $"subject" === "mathematics")
+      .agg(max($"mark"))
+      .as[Int]
+      .first()
+    println(s"7.2) Макс по математике в 13: $maxMath13")
+
+    println("-------------")
+    // 8) Сколько девочек в 12 классе с общим баллом > 150?
+    val girls12High = totals
+      .filter($"grade" === 12 && $"gender".contains("woman") && $"total" > 150)
+      .count()
+    println(s"8) Девочек 12 класса с общим баллом >150: $girls12High")
+
+    println("-------------")
+    // 9) Средний балл по математике для учеников с total>150, math>=70, age>=20
+    val studentAgg = df
+      .groupBy($"name", $"age")
+      .agg(
+        sum($"mark").as("total"),
+        avg(when($"subject" === "mathematics", $"mark")).as("mathMark")
+      )
+      .filter($"total" > 150 && $"mathMark" >= 70 && $"age" >= 20)
+
+    val avgMathFiltered = studentAgg
+      .agg(avg($"mathMark"))
+      .as[Double]
+      .first()
+    println(s"9) Средний мат. балл для отобранных: $avgMathFiltered")
+
+
+
     spark.stop()
   }
 }
+
+// bigdata: считать в dataframe, убрать первый столбец, обрезать, оставив только 2-10
+// вывести по 5-10 строк
