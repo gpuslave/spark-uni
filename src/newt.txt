@@ -1,0 +1,63 @@
+val filePath = "/app/src/people.txt"
+
+case class Student (
+  grade: Int,
+  name: String,
+  age: Int,
+  gender: String,
+  subject: String,
+  mark: Int
+)
+
+val rdd = sc.textFile(filePath).filter(_.nonEmpty)
+
+val header = rdd.first()
+
+val df = rdd
+  .filter(_ != header)
+  .map(line => {
+      val tokens = line.trim.split("\\s+")
+      val grade = tokens(0).toInt
+      val name = tokens(1)
+      val age = tokens(2).toInt
+      val gender = tokens.slice(3, 5).mkString(" ")
+      val subject = tokens(5).replaceAll("[,\\.]", "")
+      val markStr = tokens(6).replaceAll("[^0-9]", "")
+      val mark = if (markStr.nonEmpty) markStr.toInt else 0
+      Student(grade, name, age, gender, subject, mark)
+    })
+  .toDF()
+
+df.printSchema()
+df.show(30)
+
+val avgCh = df.filter($"subject" === "chinese").agg(avg($"mark")).as[Double].first()
+println(s"Срединй балл по китайскому: $avgCh")
+
+val women = df
+  .filter($"gender" === "old woman" && $"grade" === 12 && $"subject" === "chinese")
+  .filter($"mark" >= avgCh)
+  .distinct()
+
+women.show()
+
+import org.apache.spark.sql.functions._
+
+val avgTotal12 = df
+  .filter($"grade" === 12)
+  .groupBy($"name")
+  .agg(sum($"mark").alias("total"))
+  .agg(avg($"total"))
+  .as[Double]
+  .first()
+
+println(s"Средний общий балл 12 класса: $avgTotal12")
+
+val boys13 = df
+  .filter($"gender" === "old man")
+  .filter($"grade" === 13)
+  .groupBy($"name")
+  .agg(sum($"mark").alias("total"))
+  .filter($"total" > avgTotal12)
+
+boys13.show()

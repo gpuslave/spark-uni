@@ -944,7 +944,9 @@ object taskTwo {
         avg(when($"subject" === "mathematics", $"mark")).alias("mathMark")
       )
     val filterAgg = studentAgg
-      .filter($"total" > 150 && $"mathMark" >= 70 && $"age" >= 20)
+      .filter($"total" > 150 && $"mathMark" >= 70 && $"age" <= 20)
+    
+    filterAgg.show()
 
     val avgMathRow = filterAgg
       .agg(avg($"mathMark").alias("avg_math_mark"))
@@ -959,6 +961,8 @@ object taskTwo {
     spark.stop()
   }
 }
+// выведите девушек 12 класса у кого балл по китайскому вышеш среднего балла по китайскому всей школы
+// мальчики 13 класса у кого общий балл по весем предметам выше среднего общего балла 12 класса
 
 // bigdata: считать в dataframe, убрать первый столбец, обрезать, оставив только 2-10
 // вывести по 5-10 строк
