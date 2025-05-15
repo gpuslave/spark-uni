@@ -1,0 +1,10 @@
+val customSchema = StructType(Seq(
+      StructField("value1", StringType, true),
+      StructField("value2", StringType, true),
+      StructField("value3", StringType, true),
+      StructField("value4", StringType, true)
+    ))
+
+val dataframe2 = spark.read.option("header", "false").option("inferSchema", "false").schema(customSchema).csv("/app/src/data.csv")
+
+bigdata.select(cols.slice(1,10).map(name=>col(name)): _*).show(3)

@@ -46,7 +46,7 @@ This method requires you to write your Scala source code using Spark API, compil
 
 ```bash
 # use your name for --class "<YOUR_CLASS>" and your filepath
-docker exec -it spark /opt/spark/bin/spark-submit --class "App" --master "local[*]" /app/target/scala-2.12/app_2.12-1.jar
+docker exec -it spark /opt/spark/bin/spark-submit --class "App" --master "local[*]" /app/target/scala-2.12/app-assembly.jar
 ```
 
 This will run one instance of Spark that will output the result of a program and exit.  

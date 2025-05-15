@@ -950,3 +950,48 @@ object taskTwo {
 
 // bigdata: считать в dataframe, убрать первый столбец, обрезать, оставив только 2-10
 // вывести по 5-10 строк
+
+object taskThree {
+  private val spark = SparkSession
+    .builder()
+    .master("local")
+    .appName("taskOne")
+    .getOrCreate()
+
+  private val sc = spark.sparkContext
+
+  def preConfig(): Unit = {
+    sc.setLogLevel(
+      "ERROR"
+    )
+    println("\n")
+  }
+
+  // case class Student(
+  //     grade: Int,
+  //     name: String,
+  //     age: Int,
+  //     gender: String,
+  //     subject: String,
+  //     mark: Int
+  // )
+
+  def main(args: Array[String]): Unit = {
+    import spark.implicits._
+    import org.apache.spark.sql.types._
+    preConfig()
+
+    val filePath = "/app/src/bigdata.csv"
+
+    val bigdata = spark.read.option("header", "true").csv("/app/src/bigdata.csv")
+
+    bigdata.printSchema()
+    bigdata.show(10)
+
+    val cols = bigdata.columns
+
+    bigdata.select(cols.slice(1,10).map(name => col(name)): _*).show(10)
+    
+    spark.stop()
+  }
+}
