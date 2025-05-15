@@ -35,7 +35,7 @@ You can run Spark two ways: interactive shell and spark-submit.
 #### Running with interactive shell
 
 ```bash
-docker exec -it spark /opt/spark/bin/spark-shell
+docker exec -it -u root spark /opt/spark/bin/spark-shell
 ```
 Now you can enter command-by-command to evaluate your expression/program.
 
@@ -46,7 +46,7 @@ This method requires you to write your Scala source code using Spark API, compil
 
 ```bash
 # use your name for --class "<YOUR_CLASS>" and your filepath
-docker exec -it spark /opt/spark/bin/spark-submit --class "App" --master "local[*]" /app/target/scala-2.12/app-assembly.jar
+docker exec -it -u root spark /opt/spark/bin/spark-submit --class "App" --master "local[*]" /app/target/scala-2.12/app-assembly.jar
 ```
 
 This will run one instance of Spark that will output the result of a program and exit.  
